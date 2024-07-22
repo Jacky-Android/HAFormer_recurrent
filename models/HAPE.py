@@ -97,7 +97,7 @@ class HAPEBlock(nn.Module):
 
 # Example usage
 if __name__ == "__main__":
-    input_tensor = torch.randn(1, 64, 64, 64)  # Example input
-    model = HAPEBlock(in_channels=64, denote=16)  # Change denote to 6
+    input_tensor = torch.randn(20, 64, 128, 128)  # Example input
+    model = HAPEBlock(in_channels=64, denote=4)  # Change denote to 6
     output = model(input_tensor)
     print(output.shape)

@@ -37,7 +37,7 @@ class Downsample(nn.Module):
 class HAPEFormer(nn.Module):
     def __init__(self, vit = 'efficientvit_b3',channels=[32, 64, 128, 64], depths=[[2, 2, 2], [4, 4, 8, 8, 16, 16], [4, 4, 8, 8, 16, 16], [2, 2, 2]], num_classes=6):
         super(HAPEFormer, self).__init__()
-        self.vit = timm.create_model(vit, pretrained=False, num_classes=0, features_only=True)
+        self.vit = timm.create_model(vit, pretrained=True, num_classes=0, features_only=True)
         self.down0 = Downsample(3, out_channels=channels[0])
         self.cnn_stem = SeparableConvBN(in_channels=channels[0], out_channels=channels[0])
         
@@ -55,8 +55,8 @@ class HAPEFormer(nn.Module):
         self.down3 = Downsample(in_channels=channels[1], out_channels=channels[2])
         self.down4 = Downsample(in_channels=channels[2], out_channels=channels[3])
 
-        encoder_channels = self.vit.feature_info.channels()[-1]
-        outencoder_channels = int(((channels[2] / encoder_channels) * 64) * encoder_channels)
+        encoder_channels = self.vit.feature_info.channels()[-2]
+        outencoder_channels = int(((channels[2] / encoder_channels) * 16) * encoder_channels)
         
         self.cnn1 = nn.Conv2d(encoder_channels, outencoder_channels, kernel_size=1, bias=False)
         self.fusion = cwFModule(in_channels=channels[2])
@@ -67,7 +67,7 @@ class HAPEFormer(nn.Module):
         
                 
     def forward(self, x):
-        vit = self.vit(x)[-1]
+        vit = self.vit(x)[-2]
         x = self.down0(x)
         x = self.cnn_stem(x)
 
@@ -82,6 +82,7 @@ class HAPEFormer(nn.Module):
         x = F.interpolate(x, scale_factor=2, mode='bilinear', align_corners=False)
 
         b, c, h, w = x.shape
+        #print(x.shape,vit.shape)
         vit = self.cnn1(vit)
         vit = vit.view(b, c, h, w)
         x = self.fusion(x, vit)
